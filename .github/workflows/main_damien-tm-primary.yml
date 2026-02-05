@@ -1,56 +1,28 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy ASP app to Azure Web App - damien-tm-primary
+name: Deploy Static Web App
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: windows-latest
-    permissions:
-      contents: read #This is required for actions/checkout
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup MSBuild path
-        uses: microsoft/setup-msbuild@v1.0.2
-
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v1.0.5
-
-      - name: Restore NuGet packages
-        run: nuget restore
-
-      - name: Publish to folder
-        run: msbuild /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir="\published\"
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: ASP-app
-          path: '/published/**'
-
   deploy:
-    runs-on: windows-latest
-    needs: build
-    
+    runs-on: ubuntu-latest
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: ASP-app
-      
+      # 1. Pull the code from your repo into the GitHub Runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Debug step: This will show in your GitHub logs what files are present
+      - name: List files in runner
+        run: ls -R
+
+      # 3. Deploy to Azure
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'damien-tm-primary'
-          slot-name: 'Production'
+          # Use the EXACT name of your existing secret
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BDD3B944A26E4ED3818C6FF20F66110D }}
+          # '.' means "the current directory where index.html lives"
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_3801065CCCD4410585B21CFB37534AE4 }}
